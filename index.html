@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TravelLog Pro | 国内交通切符・宿泊予約 統合管理システム</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #2563eb; --primary-light: #eff6ff; --primary-dark: #1d4ed8;
+      --surface: #ffffff; --bg: #f8fafc; --border: #e2e8f0; --border-focus: #3b82f6;
+      --text: #0f172a; --text-muted: #64748b; --text-subtle: #94a3b8;
+      --success: #10b981; --success-light: #ecfdf5; --warning: #f59e0b; --warning-light: #fffbeb;
+      --danger: #ef4444; --danger-light: #fef2f2; --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    }
+    body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.5; padding: 32px 16px; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    .app-container { max-width: 1240px; margin: 0 auto; width: 100%; }
+    header { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px 32px; margin-bottom: 24px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+    .brand-title { font-size: 1.35rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 10px; letter-spacing: -0.02em; }
+    .brand-badge { font-size: 0.72rem; background: var(--primary-light); color: var(--primary); padding: 3px 8px; border-radius: 9999px; font-weight: 600; }
+    .brand-desc { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
+    .header-buttons { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .dashboard-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; position: relative; overflow: hidden; }
+    .metric-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--primary); }
+    .metric-card.accent-hotel::before { background: #8b5cf6; }
+    .metric-card.accent-grand::before { background: #0ea5e9; }
+    .metric-card.accent-count::before { background: #10b981; }
+    .metric-label { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 6px; }
+    .metric-value { font-size: 1.65rem; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+    .metric-sub { font-size: 0.75rem; color: var(--text-subtle); margin-top: 4px; }
+    .tab-navigation { display: flex; gap: 8px; margin-bottom: 20px; background: #e2e8f0; padding: 4px; border-radius: 12px; width: fit-content; max-width: 100%; overflow-x: auto; }
+    .nav-tab-btn { padding: 9px 18px; border: none; background: transparent; border-radius: 8px; font-size: 0.88rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.15s ease; white-space: nowrap; }
+    .nav-tab-btn.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+    .content-panel { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow-sm); }
+    .content-panel.active { display: block; }
+    .form-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 28px; }
+    .form-header { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .form-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; align-items: end; }
+    .form-col-12 { grid-column: span 12; }
+    .form-col-6 { grid-column: span 6; }
+    .form-col-4 { grid-column: span 4; }
+    .form-col-3 { grid-column: span 3; }
+    .form-col-2 { grid-column: span 2; }
+    @media (max-width: 960px) { .form-col-6, .form-col-4, .form-col-3, .form-col-2 { grid-column: span 6; } }
+    @media (max-width: 640px) { .form-col-6, .form-col-4, .form-col-3, .form-col-2 { grid-column: span 12; } }
+    .field-wrap { display: flex; flex-direction: column; gap: 6px; position: relative; min-width: 0; }
+    .field-label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+    .field-input, .field-select { width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.88rem; background: var(--surface); color: var(--text); outline: none; }
+    .field-input:focus, .field-select:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12); }
+    .suggest-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); max-height: 280px; overflow-y: auto; z-index: 50; display: none; margin-top: 4px; }
+    .suggest-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 0.84rem; display: flex; justify-content: space-between; align-items: center; }
+    .suggest-item:hover { background: #f0f7ff; }
+    .suggest-line { font-weight: 600; color: var(--text); }
+    .suggest-route { color: var(--primary); font-size: 0.8rem; margin-top: 2px; }
+    .suggest-price { font-weight: 700; color: var(--text); text-align: right; }
+    .suggest-type { font-size: 0.72rem; color: var(--text-muted); }
+    .btn { height: 40px; padding: 0 18px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-primary { background: var(--primary); color: #ffffff; }
+    .btn-outline { background: var(--surface); border-color: var(--border); color: var(--text); }
+    .btn-danger-icon { width: 32px; height: 32px; padding: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-muted); border: 1px solid transparent; cursor: pointer; }
+    .btn-danger-icon:hover { background: var(--danger-light); color: var(--danger); }
+    .table-wrapper { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: left; min-width: 720px; }
+    thead th { background: #f8fafc; padding: 12px 16px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tbody td { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); }
+    tbody tr:hover td { background-color: #fbfcfe; }
+    .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px; font-size: 0.74rem; font-weight: 600; }
+    .badge-shinkansen { background: #e0f2fe; color: #0369a1; }
+    .badge-express { background: #fae8ff; color: #86198f; }
+    .badge-local { background: #f1f5f9; color: #475569; }
+    .badge-hotel { background: #ede9fe; color: #5b21b6; }
+    .badge-status-reserved { background: var(--success-light); color: var(--success); }
+    .badge-status-issued { background: #dbeafe; color: #1d4ed8; }
+    .badge-status-planning { background: var(--warning-light); color: var(--warning); }
+    .badge-status-paylater { background: #fef3c7; color: #b45309; }
+    .empty-state { padding: 48px 16px; text-align: center; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div>
+        <div class="brand-title"><span>TravelLog Pro</span><span class="brand-badge">国内交通・宿泊 統合管理</span></div>
+        <div class="brand-desc">全国新幹線・在来線特急料金マスタ自動サジェスト ＆ 旅程予算管理プラットフォーム</div>
+      </div>
+      <div class="header-buttons">
+        <button class="btn btn-outline" onclick="exportJSON()">JSON保存</button>
+        <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">JSON読込</button>
+        <button class="btn btn-outline" onclick="exportCSV()">CSV出力</button>
+        <button class="btn btn-outline" onclick="window.print()">印刷</button>
+        <input type="file" id="importFile" style="display:none;" accept=".json" onchange="importJSON(event)">
+      </div>
+    </header>
+
+    <div class="dashboard-metrics">
+      <div class="metric-card accent-grand">
+        <div class="metric-label">総合手配金額（交通＋宿泊）</div>
+        <div class="metric-value" id="valGrandTotal">¥0</div>
+        <div class="metric-sub" id="valTotalCount">手配総数: 0 件</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">交通費合計</div>
+        <div class="metric-value" id="valTransportTotal">¥0</div>
+        <div class="metric-sub" id="valTransportCount">切符: 0 枚</div>
+      </div>
+      <div class="metric-card accent-hotel">
+        <div class="metric-label">宿泊費合計</div>
+        <div class="metric-value" id="valHotelTotal">¥0</div>
+        <div class="metric-sub" id="valHotelCount">宿泊: 0 件</div>
+      </div>
+      <div class="metric-card accent-count">
+        <div class="metric-label">確定済ステータス</div>
+        <div class="metric-value" id="valConfirmedCount">0 件</div>
+        <div class="metric-sub">予約済・発券済の手配</div>
+      </div>
+    </div>
+
+    <div class="tab-navigation">
+      <button class="nav-tab-btn active" onclick="setTab('tab-transport', this)">交通手配（新幹線・特急・乗車券）</button>
+      <button class="nav-tab-btn" onclick="setTab('tab-hotel', this)">宿泊予約（ホテル・宿）</button>
+      <button class="nav-tab-btn" onclick="setTab('tab-itinerary', this)">行程統合タイムライン</button>
+    </div>
+
+    <div id="tab-transport" class="content-panel active">
+      <div class="form-box">
+        <div class="form-header"><div class="form-title">交通切符のクイック登録</div></div>
+        <div class="form-grid">
+          <div class="field-wrap form-col-12">
+            <label class="field-label" for="searchMasterInput">全国路線・列車・区間スマートサジェスト検索</label>
+            <input type="text" id="searchMasterInput" class="field-input" placeholder="列車名や駅名を入力（例: のぞみ、はやぶさ、博多、金沢、あずさ 等）..." autocomplete="off">
+            <div id="suggestList" class="suggest-dropdown"></div>
+          </div>
+          <div class="field-wrap form-col-2"><label class="field-label" for="tDate">利用日</label><input type="date" id="tDate" class="field-input"></div>
+          <div class="field-wrap form-col-2">
+            <label class="field-label" for="tType">種別</label>
+            <select id="tType" class="field-select" onchange="calcFareModifier()">
+              <option value="新幹線">新幹線</option>
+              <option value="在来線特急">在来線特急</option>
+              <option value="普通・快速">普通・快速</option>
+              <option value="私鉄・地下鉄">私鉄・地下鉄</option>
+            </select>
+          </div>
+          <div class="field-wrap form-col-2"><label class="field-label" for="tName">列車名 / 便名</label><input type="text" id="tName" class="field-input" placeholder="例: のぞみ 25号"></div>
+          <div class="field-wrap form-col-2"><label class="field-label" for="tDep">出発駅</label><input type="text" id="tDep" class="field-input" placeholder="例: 東京"></div>
+          <div class="field-wrap form-col-2"><label class="field-label" for="tArr">到着駅</label><input type="text" id="tArr" class="field-input" placeholder="例: 京都"></div>
+          <div class="field-wrap form-col-2">
+            <label class="field-label" for="tSeat">座席種別</label>
+            <select id="tSeat" class="field-select" onchange="calcFareModifier()">
+              <option value="普通車指定席">指定席</option>
+              <option value="自由席">自由席</option>
+              <option value="グリーン車">グリーン車</option>
+              <option value="グランクラス">グランクラス</option>
+            </select>
+          </div>
+          <div class="field-wrap form-col-2"><label class="field-label" for="tPrice">料金（円）</label><input type="number" id="tPrice" class="field-input" placeholder="0"></div>
+          <div class="field-wrap form-col-2">
+            <label class="field-label" for="tStatus">手配ステータス</label>
+            <select id="tStatus" class="field-select"><option value="予約済">予約済</option><option value="発券済">発券済</option><option value="検討中">検討中</option></select>
+          </div>
+          <div class="field-wrap form-col-6"><label class="field-label" for="tMemo">座席番号・メモ</label><input type="text" id="tMemo" class="field-input" placeholder="例: EX予約 7号車12A窓側"></div>
+          <div class="field-wrap form-col-2"><button class="btn btn-primary" style="width:100%;" onclick="submitTransport()">切符を追加</button></div>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>利用日</th><th>種別・列車</th><th>区間</th><th>座席</th><th>料金</th><th>状態</th><th>備考</th><th style="text-align:center;">操作</th></tr></thead>
+          <tbody id="tableBodyTransport"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-hotel" class="content-panel">
+      <div class="form-box">
+        <div class="form-header"><div class="form-title">宿泊予約の登録</div></div>
+        <div class="form-grid">
+          <div class="field-wrap form-col-4"><label class="field-label" for="hName">宿泊施設名</label><input type="text" id="hName" class="field-input" placeholder="例: ホテルグランヴィア京都"></div>
+          <div class="field-wrap form-col-2"><label class="field-label" for="hCheckin">チェックイン</label><input type="date" id="hCheckin" class="field-input" onchange="autoCalcNights()"></div>
+          <div class="field-wrap form-col-2"><label class="field-label" for="hCheckout">チェックアウト</label><input type="date" id="hCheckout" class="field-input" onchange="autoCalcNights()"></div>
+          <div class="field-wrap form-col-2"><label class="field-label" for="hNights">泊数</label><input type="number" id="hNights" class="field-input" value="1" min="1"></div>
+          <div class="field-wrap form-col-2"><label class="field-label" for="hPrice">総宿泊代金（円）</label><input type="number" id="hPrice" class="field-input" placeholder="0"></div>
+          <div class="field-wrap form-col-3"><label class="field-label" for="hRoom">部屋タイプ / プラン</label><input type="text" id="hRoom" class="field-input" placeholder="例: シングル禁煙"></div>
+          <div class="field-wrap form-col-3">
+            <label class="field-label" for="hStatus">決済状態</label>
+            <select id="hStatus" class="field-select"><option value="予約済(事前決済)">予約済 (事前決済)</option><option value="現地決済">予約済 (現地決済)</option><option value="検討中">検討中</option></select>
+          </div>
+          <div class="field-wrap form-col-4"><label class="field-label" for="hMemo">予約番号・備考</label><input type="text" id="hMemo" class="field-input" placeholder="例: じゃらん J12345678"></div>
+          <div class="field-wrap form-col-2"><button class="btn btn-primary" style="width:100%;" onclick="submitHotel()">宿泊を追加</button></div>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>日程</th><th>宿泊施設名</th><th>部屋・プラン</th><th>泊数</th><th>料金</th><th>状態</th><th>備考</th><th style="text-align:center;">操作</th></tr></thead>
+          <tbody id="tableBodyHotel"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-itinerary" class="content-panel">
+      <div style="margin-bottom: 16px; font-weight: 700;">全行程・費用時系列タイムライン</div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>日付</th><th>区分</th><th>項目・行程概要</th><th>金額</th><th>ステータス</th><th>備考</th></tr></thead>
+          <tbody id="tableBodyItinerary"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const RAIL_DATABASE = [
+      { type: "新幹線", name: "のぞみ", line: "東海道新幹線", dep: "東京", arr: "名古屋", baseFare: 11300 },
+      { type: "新幹線", name: "のぞみ", line: "東海道新幹線", dep: "東京", arr: "京都", baseFare: 14170 },
+      { type: "新幹線", name: "のぞみ", line: "東海道新幹線", dep: "東京", arr: "新大阪", baseFare: 14720 },
+      { type: "新幹線", name: "のぞみ", line: "東海道・山陽新幹線", dep: "東京", arr: "岡山", baseFare: 17740 },
+      { type: "新幹線", name: "のぞみ", line: "東海道・山陽新幹線", dep: "東京", arr: "広島", baseFare: 19440 },
+      { type: "新幹線", name: "のぞみ", line: "東海道・山陽新幹線", dep: "東京", arr: "博多", baseFare: 23390 },
+      { type: "新幹線", name: "ひかり", line: "東海道新幹線", dep: "東京", arr: "新大阪", baseFare: 14400 },
+      { type: "新幹線", name: "こだま", line: "東海道新幹線", dep: "東京", arr: "静岡", baseFare: 6470 },
+      { type: "新幹線", name: "のぞみ / みずほ", line: "山陽新幹線", dep: "新大阪", arr: "博多", baseFare: 15600 },
+      { type: "新幹線", name: "みずほ / さくら", line: "山陽・九州新幹線", dep: "新大阪", arr: "鹿児島中央", baseFare: 22630 },
+      { type: "新幹線", name: "かもめ", line: "西九州新幹線", dep: "武雄温泉", arr: "長崎", baseFare: 3600 },
+      { type: "新幹線", name: "はやぶさ", line: "東北新幹線", dep: "東京", arr: "仙台", baseFare: 11410 },
+      { type: "新幹線", name: "はやぶさ", line: "東北新幹線", dep: "東京", arr: "新青森", baseFare: 17670 },
+      { type: "新幹線", name: "はやぶさ", line: "北海道新幹線", dep: "東京", arr: "新函館北斗", baseFare: 23430 },
+      { type: "新幹線", name: "こまち", line: "秋田新幹線", dep: "東京", arr: "秋田", baseFare: 18020 },
+      { type: "新幹線", name: "つばさ", line: "山形新幹線", dep: "東京", arr: "山形", baseFare: 11450 },
+      { type: "新幹線", name: "とき", line: "上越新幹線", dep: "東京", arr: "新潟", baseFare: 10760 },
+      { type: "新幹線", name: "かがやき / はくたか", line: "北陸新幹線", dep: "東京", arr: "金沢", baseFare: 14380 },
+      { type: "新幹線", name: "かがやき / はくたか", line: "北陸新幹線", dep: "東京", arr: "敦賀", baseFare: 16360 },
+      { type: "在来線特急", name: "あずさ", line: "中央本線", dep: "新宿", arr: "松本", baseFare: 6620 },
+      { type: "在来線特急", name: "ひたち", line: "常磐線", dep: "品川・東京", arr: "いわき", baseFare: 6290 },
+      { type: "在来線特急", name: "踊り子", line: "東海道・伊東線", dep: "東京", arr: "伊豆急下田", baseFare: 5970 },
+      { type: "在来線特急", name: "しなの", line: "中央西線", dep: "名古屋", arr: "長野", baseFare: 7020 },
+      { type: "在来線特急", name: "ひだ", line: "高山本線", dep: "名古屋", arr: "高山", baseFare: 6140 },
+      { type: "在来線特急", name: "サンダーバード", line: "湖西・北陸線", dep: "大阪", arr: "敦賀", baseFare: 4420 },
+      { type: "在来線特急", name: "くろしお", line: "阪和・紀勢本線", dep: "新大阪", arr: "白浜", baseFare: 5700 },
+      { type: "在来線特急", name: "スーパーはくと", line: "智頭急行・山陰線", dep: "京都", arr: "鳥取", baseFare: 8520 },
+      { type: "在来線特急", name: "やくも", line: "伯備線", dep: "岡山", arr: "出雲市", baseFare: 6790 },
+      { type: "在来線特急", name: "ソニック", line: "日豊本線", dep: "博多", arr: "大分", baseFare: 5680 },
+      { type: "在来線特急", name: "北斗", line: "函館本線", dep: "札幌", arr: "函館", baseFare: 9440 }
+    ];
+
+    let appState = { transports: [], hotels: [] };
+    let selectedBaseFare = 0;
+
+    function init() {
+      const stored = localStorage.getItem("travel_log_data_v2");
+      if (stored) {
+        try { appState = JSON.parse(stored); } catch (e) {}
+      }
+      setupAutocomplete();
+      renderAll();
+    }
+
+    function saveState() {
+      localStorage.setItem("travel_log_data_v2", JSON.stringify(appState));
+      renderAll();
+    }
+
+    function setTab(tabId, el) {
+      document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      el.classList.add('active');
+    }
+
+    function setupAutocomplete() {
+      const input = document.getElementById("searchMasterInput");
+      const list = document.getElementById("suggestList");
+
+      input.addEventListener("input", () => {
+        const query = input.value.trim().toLowerCase();
+        if (!query) { list.style.display = "none"; return; }
+
+        const matches = RAIL_DATABASE.filter(r => 
+          r.name.toLowerCase().includes(query) || r.dep.toLowerCase().includes(query) ||
+          r.arr.toLowerCase().includes(query) || r.line.toLowerCase().includes(query)
+        );
+
+        if (matches.length === 0) { list.style.display = "none"; return; }
+
+        list.innerHTML = matches.slice(0, 8).map(r => `
+          <div class="suggest-item" onclick="applySuggestion(${RAIL_DATABASE.indexOf(r)})">
+            <div><div class="suggest-line">${r.line} 【${r.name}】</div><div class="suggest-route">${r.dep} ➔ ${r.arr}</div></div>
+            <div style="text-align: right;"><div class="suggest-price">¥${r.baseFare.toLocaleString()}</div><div class="suggest-type">${r.type}</div></div>
+          </div>
+        `).join("");
+        list.style.display = "block";
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!input.contains(e.target) && !list.contains(e.target)) list.style.display = "none";
+      });
+    }
+
+    function applySuggestion(index) {
+      const r = RAIL_DATABASE[index];
+      if (!r) return;
+      document.getElementById("tType").value = r.type;
+      document.getElementById("tName").value = r.name;
+      document.getElementById("tDep").value = r.dep;
+      document.getElementById("tArr").value = r.arr;
+      selectedBaseFare = r.baseFare;
+      calcFareModifier();
+      document.getElementById("suggestList").style.display = "none";
+      document.getElementById("searchMasterInput").value = `${r.name} (${r.dep}→${r.arr})`;
+    }
+
+    function calcFareModifier() {
+      const seat = document.getElementById("tSeat").value;
+      if (!selectedBaseFare) selectedBaseFare = parseInt(document.getElementById("tPrice").value, 10) || 0;
+      if (selectedBaseFare <= 0) return;
+      let adjusted = selectedBaseFare;
+      if (seat === "自由席") adjusted = Math.max(0, selectedBaseFare - 530);
+      else if (seat === "グリーン車") adjusted = selectedBaseFare + 4000;
+      else if (seat === "グランクラス") adjusted = selectedBaseFare + 9000;
+      document.getElementById("tPrice").value = adjusted;
+    }
+
+    function autoCalcNights() {
+      const inDate = document.getElementById("hCheckin").value;
+      const outDate = document.getElementById("hCheckout").value;
+      if (inDate && outDate) {
+        const diffDays = Math.ceil((new Date(outDate) - new Date(inDate)) / (1000 * 60 * 60 * 24));
+        if (diffDays > 0) document.getElementById("hNights").value = diffDays;
+      }
+    }
+
+    function submitTransport() {
+      const dep = document.getElementById("tDep").value.trim();
+      const arr = document.getElementById("tArr").value.trim();
+      if (!dep || !arr) { alert("出発駅と到着駅を入力してください。"); return; }
+      appState.transports.push({
+        id: "T_" + Date.now(),
+        date: document.getElementById("tDate").value || "未設定",
+        type: document.getElementById("tType").value,
+        name: document.getElementById("tName").value.trim() || "-",
+        dep, arr,
+        seat: document.getElementById("tSeat").value,
+        price: parseInt(document.getElementById("tPrice").value, 10) || 0,
+        status: document.getElementById("tStatus").value,
+        memo: document.getElementById("tMemo").value.trim()
+      });
+      document.getElementById("tName").value = "";
+      document.getElementById("tDep").value = "";
+      document.getElementById("tArr").value = "";
+      document.getElementById("tPrice").value = "";
+      document.getElementById("tMemo").value = "";
+      document.getElementById("searchMasterInput").value = "";
+      selectedBaseFare = 0;
+      saveState();
+    }
+
+    function submitHotel() {
+      const name = document.getElementById("hName").value.trim();
+      if (!name) { alert("宿泊施設名を入力してください。"); return; }
+      appState.hotels.push({
+        id: "H_" + Date.now(),
+        name,
+        checkin: document.getElementById("hCheckin").value || "未設定",
+        checkout: document.getElementById("hCheckout").value || "未設定",
+        nights: parseInt(document.getElementById("hNights").value, 10) || 1,
+        room: document.getElementById("hRoom").value.trim() || "-",
+        price: parseInt(document.getElementById("hPrice").value, 10) || 0,
+        status: document.getElementById("hStatus").value,
+        memo: document.getElementById("hMemo").value.trim()
+      });
+      document.getElementById("hName").value = "";
+      document.getElementById("hRoom").value = "";
+      document.getElementById("hPrice").value = "";
+      document.getElementById("hMemo").value = "";
+      saveState();
+    }
+
+    function removeItem(kind, id) {
+      if (confirm("削除してもよろしいですか？")) {
+        if (kind === 'transport') appState.transports = appState.transports.filter(x => x.id !== id);
+        else appState.hotels = appState.hotels.filter(x => x.id !== id);
+        saveState();
+      }
+    }
+
+    function renderAll() {
+      renderTransportTable();
+      renderHotelTable();
+      renderItineraryTable();
+      updateMetrics();
+    }
+
+    function renderTransportTable() {
+      const tbody = document.getElementById("tableBodyTransport");
+      if (appState.transports.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">登録された交通切符はありません。上のフォームから検索・追加してください。</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = appState.transports.map(t => `
+        <tr>
+          <td><strong>${t.date}</strong></td>
+          <td><span class="badge ${t.type === '新幹線' ? 'badge-shinkansen' : 'badge-express'}">${t.type}</span><div style="font-weight:600;">${t.name}</div></td>
+          <td>${t.dep} ➔ ${t.arr}</td>
+          <td>${t.seat}</td>
+          <td style="font-weight:700;">¥${t.price.toLocaleString()}</td>
+          <td><span class="badge ${getStatusBadge(t.status)}">${t.status}</span></td>
+          <td style="color:var(--text-muted);">${t.memo || "-"}</td>
+          <td style="text-align:center;"><button class="btn-danger-icon" onclick="removeItem('transport', '${t.id}')">✕</button></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderHotelTable() {
+      const tbody = document.getElementById("tableBodyHotel");
+      if (appState.hotels.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">登録された宿泊予約はありません。上のフォームから追加してください。</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = appState.hotels.map(h => `
+        <tr>
+          <td><strong>${h.checkin}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">〜 ${h.checkout}</span></td>
+          <td><span class="badge badge-hotel">宿泊</span><div style="font-weight:700;">${h.name}</div></td>
+          <td>${h.room}</td>
+          <td>${h.nights} 泊</td>
+          <td style="font-weight:700;">¥${h.price.toLocaleString()}</td>
+          <td><span class="badge ${getStatusBadge(h.status)}">${h.status}</span></td>
+          <td style="color:var(--text-muted);">${h.memo || "-"}</td>
+          <td style="text-align:center;"><button class="btn-danger-icon" onclick="removeItem('hotel', '${h.id}')">✕</button></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderItineraryTable() {
+      const tbody = document.getElementById("tableBodyItinerary");
+      const list = [];
+      appState.transports.forEach(t => list.push({ date: t.date, label: t.type, title: `${t.name} (${t.dep} ➔ ${t.arr}) [${t.seat}]`, price: t.price, status: t.status, memo: t.memo }));
+      appState.hotels.forEach(h => list.push({ date: h.checkin, label: "宿泊", title: `${h.name} [${h.room} / ${h.nights}泊]`, price: h.price, status: h.status, memo: h.memo }));
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">交通や宿泊の手配を追加すると、ここに時系列の旅程表が自動生成されます。</div></td></tr>`;
+        return;
+      }
+      list.sort((a, b) => (a.date > b.date ? 1 : -1));
+      tbody.innerHTML = list.map(item => `
+        <tr>
+          <td><strong>${item.date}</strong></td>
+          <td><span class="badge">${item.label}</span></td>
+          <td style="font-weight:600;">${item.title}</td>
+          <td style="font-weight:700;">¥${item.price.toLocaleString()}</td>
+          <td><span class="badge ${getStatusBadge(item.status)}">${item.status}</span></td>
+          <td style="color:var(--text-muted);">${item.memo || "-"}</td>
+        </tr>
+      `).join("");
+    }
+
+    function getStatusBadge(status) {
+      if (status.includes("予約済") || status.includes("事前決済")) return "badge-status-reserved";
+      if (status.includes("発券済")) return "badge-status-issued";
+      if (status.includes("現地決済")) return "badge-status-paylater";
+      return "badge-status-planning";
+    }
+
+    function updateMetrics() {
+      const transSum = appState.transports.reduce((acc, x) => acc + (x.price || 0), 0);
+      const hotelSum = appState.hotels.reduce((acc, x) => acc + (x.price || 0), 0);
+      document.getElementById("valGrandTotal").innerText = `¥${(transSum + hotelSum).toLocaleString()}`;
+      document.getElementById("valTotalCount").innerText = `手配総数: ${appState.transports.length + appState.hotels.length} 件`;
+      document.getElementById("valTransportTotal").innerText = `¥${transSum.toLocaleString()}`;
+      document.getElementById("valTransportCount").innerText = `切符: ${appState.transports.length} 枚`;
+      document.getElementById("valHotelTotal").innerText = `¥${hotelSum.toLocaleString()}`;
+      document.getElementById("valHotelCount").innerText = `宿泊: ${appState.hotels.length} 件`;
+      document.getElementById("valConfirmedCount").innerText = `${appState.transports.filter(x => x.status !== '検討中').length + appState.hotels.filter(x => x.status !== '検討中').length} 件`;
+    }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `TravelLog_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try { appState = JSON.parse(event.target.result); saveState(); alert("インポート完了"); }
+        catch (err) { alert("不正なJSONです"); }
+      };
+      reader.readAsText(file);
+    }
+
+    function exportCSV() {
+      let csv = "\uFEFF大分類,利用日,名称・列車,区間・部屋,座席・泊数,料金(円),ステータス,備考\n";
+      appState.transports.forEach(t => csv += `交通,${t.date},"${t.type} ${t.name}","${t.dep} ➔ ${t.arr}",${t.seat},${t.price},${t.status},"${t.memo || ''}"\n`);
+      appState.hotels.forEach(h => csv += `宿泊,${h.checkin},"${h.name}","チェックアウト: ${h.checkout}","${h.nights}泊 (${h.room})",${h.price},${h.status},"${h.memo || ''}"\n`);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `TravelLog_Itinerary_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
